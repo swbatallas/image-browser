@@ -1,17 +1,8 @@
-import "./style.css";
-import { fetchImagesFromAPI } from "./fetchImagesAPI";
-import { PhotoSearchAPIResult } from "./fetchImagesAPI";
+export { renderApp };
 import { render, html, nothing } from "lit-html";
+import { PhotoSearchAPIResult } from "./fetchImagesAPI";
 
-async function onFormSubmit(event: SubmitEvent) {
-  event.preventDefault()
-  if (!event.target) {
-    return
-  }
-  const formData = new FormData(event.target as HTMLFormElement);
-  const query = formData.get('search-query');if (query) {...}
-}
-
+async function onFormSubmit() {};
 function renderApp(results: PhotoSearchAPIResult | null): void {
   const div = document.getElementById("app");
   if (!div) {
@@ -30,8 +21,6 @@ function renderApp(results: PhotoSearchAPIResult | null): void {
             return html`<li><img src=${photo.src.small} /></li>`;
           })
         : nothing}
-    </ul>`;
+    </ul>`; 
   render(htmlToRender, div);
 }
-
-renderApp()
