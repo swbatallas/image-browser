@@ -1,15 +1,20 @@
 import "./style.css";
-import { fetchImagesFromAPI } from "./fetchImagesAPI";
-import { PhotoSearchAPIResult } from "./fetchImagesAPI";
+import { fetchImagesFromAPI } from "./pexels";
+import { PhotoSearchAPIResult } from "./pexels";
 import { render, html, nothing } from "lit-html";
+import { renderPhoto } from "./photo-renderer";
 
 async function onFormSubmit(event: SubmitEvent) {
-  event.preventDefault()
+  event.preventDefault();
   if (!event.target) {
-    return
+    return;
   }
   const formData = new FormData(event.target as HTMLFormElement);
-  const query = formData.get('search-query');if (query) {...}
+  const query = formData.get("search-query");
+  if (query && typeof query === "string") {
+    const results = await fetchImagesFromAPI(query, 10);
+    renderApp(results);
+  }
 }
 
 function renderApp(results: PhotoSearchAPIResult | null): void {
@@ -27,11 +32,11 @@ function renderApp(results: PhotoSearchAPIResult | null): void {
     <ul>
       ${results
         ? results.photos.map((photo) => {
-            return html`<li><img src=${photo.src.small} /></li>`;
+            return renderPhoto(photo);
           })
         : nothing}
     </ul>`;
   render(htmlToRender, div);
 }
 
-renderApp()
+renderApp(null);
