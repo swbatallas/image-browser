@@ -9,11 +9,6 @@ interface StoredLike {
 }
 type StoredLikes = StoredLike[];
 
-interface StoreUserLikes {
-  photos: number[];
-  videos: number[];
-}
-
 const LOCAL_STORAGE_KEY = import.meta.env.PEXELS_API_KEY;
 
 function saveLikes(likes: StoredLikes): void {
