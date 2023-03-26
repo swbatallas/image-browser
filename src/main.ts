@@ -1,8 +1,13 @@
 import "./style.css";
-import { fetchImagesFromAPI } from "./pexels";
-import { PhotoSearchAPIResult } from "./pexels";
+import {
+  fetchImagesFromAPI,
+  fetchVideosFromAPI,
+  isPhoto,
+  Resource,
+} from "./pexels";
 import { render, html, nothing } from "lit-html";
-import { renderPhoto } from "./photo-renderer";
+import { renderResource } from "./photo-renderer";
+import { saveLikes, loadLikes, LikedResource } from "./storage";
 
 async function onFormSubmit(event: SubmitEvent) {
   event.preventDefault();
@@ -13,29 +18,73 @@ async function onFormSubmit(event: SubmitEvent) {
   const query = formData.get("search-query");
   if (query && typeof query === "string") {
     const results = await fetchImagesFromAPI(query, 10);
-    renderApp(results);
+    const videos = await fetchVideosFromAPI(query, 10);
+    const photosAndVideos: Resource[] = [];
+    for (let i = 0; i < results.photos.length; i++) {
+      photosAndVideos.push(results.photos[i]);
+      photosAndVideos.push(videos.videos[i]);
+    }
+    renderApp(photosAndVideos);
   }
 }
 
-function renderApp(results: PhotoSearchAPIResult | null): void {
+
+function renderApp(results: readonly Resource[] | null): void {
   const div = document.getElementById("app");
+  const likedData = loadLikes() || [];
   if (!div) {
     throw new Error("could not find app div");
   }
-  const htmlToRender = html`<h1>Amazing Photo App</h1>
+
+  function onUserLikeClick(resource: Resource): void {
+    const enumResourceType = isPhoto(resource)
+      ? LikedResource.Photo
+      : LikedResource.Video;
+
+    const likedResourceEntry = likedData.find((entry) => {
+      return (
+        entry.id === resource.id && entry.resourceType === enumResourceType
+      );
+    });
+    const resourceIsLiked = likedResourceEntry !== undefined;
+    let newLikedResources = likedData;
+    if (resourceIsLiked) {
+      newLikedResources = newLikedResources.filter(
+        (entry) => entry !== likedResourceEntry
+      );
+    } else {
+      newLikedResources.push({
+        id: resource.id,
+        resourceType: enumResourceType,
+      });
+    }
+    saveLikes(newLikedResources);
+    renderApp(results);
+  }
+
+  const htmlToRender = html`
+    <h1>Amazing Photo App</h1>
     <form id="search" @submit=${onFormSubmit}>
-      <input type="text" name="search-query" placeholder="dogs" /><input
-        type="submit"
-        value="Search"
-      />
+      <input type="text" name="search-query" placeholder="dogs" />
+      <input type="submit" value="Search" />
     </form>
     <ul>
       ${results
-        ? results.photos.map((photo) => {
-            return renderPhoto(photo);
+        ? results.map((resource) => {
+            const resourceIsLiked = likedData.some((entry) => {
+              const enumResourceType = isPhoto(resource)
+                ? LikedResource.Photo
+                : LikedResource.Video;
+              return (
+                entry.id === resource.id &&
+                entry.resourceType === enumResourceType
+              );
+            });
+            return renderResource(resource, onUserLikeClick, resourceIsLiked);
           })
         : nothing}
-    </ul>`;
+    </ul>
+  `;
   render(htmlToRender, div);
 }
 

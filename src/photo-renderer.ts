@@ -1,10 +1,16 @@
-export { renderPhoto };
-import { Photo } from "./pexels";
+import { Resource, isPhoto } from "./pexels";
 import { html } from "lit-html";
 
-function renderPhoto(photo: Photo, onLikeClick: (photoId: number) => void) {
-  return html`<li>
-    <img src=${photo.src.small} />
-    <button class="like" @click=${() => onLikeClick(photo.id)}>Like</button>
+export function renderResource(
+  resource: Resource,
+  onLikeClick: (resource: Resource) => void,
+  resourceIsLiked: boolean
+  ) {
+  const imageURl = isPhoto(resource) ? resource.src.small : resource.image;
+  return html`<li class="photo">
+  <img src=${imageURl} />
+  <button class="like" @click=${() => onLikeClick(resource)}>
+  ${resourceIsLiked ? 'Dislike' : 'Like'}
+  </button>
   </li>`;
-}
+  }
